@@ -1,28 +1,26 @@
-# node 이미지 사용
-FROM node    
+# Node 이미지를 사용
+FROM node:14
 
-# 이후 명령어를 실행하고 반영할 컨테이너 내 작업 디렉토리 설정
-WORKDIR /app 
+# 작업 디렉토리 설정
+WORKDIR /app
 
-# package.json 파일을 경로(.)에 복사
-COPY package.json . 
+# package.json과 package-lock.json을 복사
+COPY package*.json ./
 
-# package.json 내부의 의존성을 설치
+# 의존성 설치
 RUN npm install
 
-# 프로젝트의 모든 파일을 복사한다. [ 현재 작업 디렉토리의 루트 경로 : .] 에서 [ container 디렉토리의 루트 경로 : . ]로 복사
+# 나머지 애플리케이션 코드를 복사
 COPY . .
 
-# 엥 그럼 package.json 왜 카피함? 뒤에서 모든 파일 복사할건데?
-# 도커의 명령어는 각 줄을 layer처럼 동작하고, 각 레이어가 실행되었을 때 그 결과 값이 캐싱된다. (이후 빌드 과정에서 빨리 됨)
-# package.json의 경우 상대적으로 바뀔 가능성이 적다.
-# 나머지 코드들은 docker를 실행하는 과정에서도 수정이 될 수 있기 때문에 변하지 않는 Package.json을 먼저 카피해서 의존성을 설치하여 캐싱해두고,
-# 가장 최신의 코드를 복사하기 위해서 두 구간을 나눠서 작성한다.
+# 애플리케이션을 빌드
+RUN npm run build
 
-# 만약에 모든 파일을 복사한 후 Install 하면 코드의 변화 때문에 캐싱 기능을 제대로 사용하지 못할 가능성이 높기 때문이다.
+# `serve` 패키지 설치
+RUN npm install -g serve
 
-# 런타임에 사용할 포트 번호 설정
+# 컨테이너가 시작될 때 실행할 명령어 설정
+CMD ["serve", "-s", "build"]
+
+# 포트 5000 노출
 EXPOSE 3000
-
-#  react 프로젝트 시작
-CMD ["npm", "start"]
